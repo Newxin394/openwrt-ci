@@ -1,5 +1,5 @@
 #设备平台
 CONFIG_TARGET_qualcommax=y
 CONFIG_TARGET_qualcommax_ipq60xx=y
-#设备列表（仅编译京东云百里 AX6600）
+#设备列表（仅编译京东云亚瑟 AX1800 Pro / JDCloud RE-SS-01）
 CONFIG_TARGET_DEVICE_qualcommax_ipq60xx_DEVICE_jdcloud_re-ss-01=y
