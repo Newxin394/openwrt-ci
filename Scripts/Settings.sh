@@ -31,6 +31,60 @@ sed -i "s/192\.168\.[0-9]*\.[0-9]*/$WRT_IP/g" $CFG_FILE
 #修改默认主机名
 sed -i "s/hostname='.*'/hostname='$WRT_NAME'/g" $CFG_FILE
 
+# ======================================================
+# 网络优化与 NSS 多核调优 (Packet Steering & Sysctl)
+# ======================================================
+# 1. 默认启用 Packet Steering (多核分流，避免 CPU0 单核打满)
+UCI_DEF_DIR="./package/base-files/files/etc/uci-defaults"
+mkdir -p "$UCI_DEF_DIR"
+cat << 'EOF' > "$UCI_DEF_DIR/99-custom-packet-steering"
+#!/bin/sh
+uci set network.@globals[0].packet_steering='1'
+uci commit network
+exit 0
+EOF
+chmod +x "$UCI_DEF_DIR/99-custom-packet-steering"
+
+# 2. 预置高吞吐与 NSS 协议栈系统参数调优
+SYSCTL_DIR="./package/base-files/files/etc/sysctl.d"
+mkdir -p "$SYSCTL_DIR"
+cat << 'EOF' > "$SYSCTL_DIR/99-nss-tuning.conf"
+# NSS & High-Throughput Network Stack Optimization
+net.core.netdev_max_backlog = 10000
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.ipv4.tcp_rmem = 4096 87380 16777216
+net.ipv4.tcp_wmem = 4096 65536 16777216
+net.netfilter.nf_conntrack_max = 131072
+EOF
+
+# 3. 预置 APK 软件源与公钥（支持通过 APK 安装 Sub-Store 与 Nikki 预编译包）
+APK_REPO_DIR="./package/base-files/files/etc/apk/repositories.d"
+APK_KEYS_DIR="./package/base-files/files/etc/apk/keys"
+mkdir -p "$APK_REPO_DIR" "$APK_KEYS_DIR"
+
+cat << 'EOF' > "$APK_REPO_DIR/substore.list"
+https://substore-openwrt.pages.dev/openwrt-25.12/all/packages.adb
+EOF
+
+cat << 'EOF' > "$APK_REPO_DIR/customfeeds.list"
+https://nikkinikki.pages.dev/SNAPSHOT/aarch64_cortex-a53/nikki/packages.adb
+EOF
+
+cat << 'EOF' > "$APK_KEYS_DIR/substore-apk.pem"
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEJKvnnTePdD16sK/rksork3HzOxeQ
+YJjfM7/Fd1eVSpC7k4I/80OpF8lxuoCMbNilssnMtG2WUv/idDjcIEa+Lw==
+-----END PUBLIC KEY-----
+EOF
+
+cat << 'EOF' > "$APK_KEYS_DIR/nikki.pem"
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAETOwt83tzTFqyvjwimjuuvslR40t6
+XnROMwxZsC0iQAr2hHjuXX8qyhf5WaD2Hd897+Gc1/+4W4DMqroNp5w2Dg==
+-----END PUBLIC KEY-----
+EOF
+
 #配置文件修改
 echo "CONFIG_PACKAGE_luci=y" >> ./.config
 echo "CONFIG_LUCI_LANG_zh_Hans=y" >> ./.config
