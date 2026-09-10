@@ -67,7 +67,7 @@ cat << 'EOF' > "$APK_REPO_DIR/substore.list"
 https://substore-openwrt.pages.dev/openwrt-25.12/all/packages.adb
 EOF
 
-cat << 'EOF' > "$APK_REPO_DIR/customfeeds.list"
+cat << 'EOF' > "$APK_REPO_DIR/nikki.list"
 https://nikkinikki.pages.dev/SNAPSHOT/aarch64_cortex-a53/nikki/packages.adb
 EOF
 
